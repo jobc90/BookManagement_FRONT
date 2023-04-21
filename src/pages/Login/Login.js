@@ -1,11 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
-import React from 'react';
-import { Link } from 'react-router-dom'
-import { FiUser, FiLock } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import LoginInput from '../../components/UI/login/LoginInput/LoginInput';
+import { FiUser, FiLock } from 'react-icons/fi';
 import { BsGoogle } from 'react-icons/bs';
 import { SiNaver, SiKakao } from 'react-icons/si';
+import axios from 'axios';
+import { refreshState } from '../../atoms/Auth/AuthAtoms';
+import { useRecoilState } from 'recoil';
 
 const container = css`
     display: flex;
@@ -35,30 +38,30 @@ const authForm = css`
 `;
 
 const inputLabel = css`
-    margin-left: 10px;
+    margin-left: 5px;
     font-size: 12px;
     font-weight: 600;
 `;
 
-const forgotpassword = css`
+const forgotPassword = css`
     display: flex;
     justify-content: flex-end;
     align-items: center;
     margin-bottom: 45px;
     width: 100%;
-    font-size: 10px;
-    font-weight: 550;
+    font-size: 12px;
+    font-weight: 600;
 `;
 
 const loginButton = css`
     margin: 10px 0px;
     border: 1px solid #dbdbdb;
-    border-radius: 6px;
+    border-radius: 7px;
     width: 100%;
     height: 50px;
     background-color: white;
     font-weight: 900;
-
+    cursor: pointer;
     &:hover {
         background-color: #fafafa;
     }
@@ -73,7 +76,7 @@ const oauth2Container = css`
     align-items: center;
     margin: 20px;
     width: 100%;
-`
+`;
 
 const oauth2 = (provider) => css`
     display: flex;
@@ -89,7 +92,6 @@ const oauth2 = (provider) => css`
     &:hover {
         background-color: ${provider === "google" ? "#0075ff" : provider === "naver" ? "#19ce60" : "#ffdc00"};
     }
-
 `;
 
 const signupMessage = css`
@@ -101,11 +103,46 @@ const signupMessage = css`
 
 const register = css`
     margin-top: 10px;
-    font-weight: 900;
+    font-weight: 600;
 `;
 
+const errorMsg = css`
+    margin-left: 5px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: red;
+`;
 
 const Login = () => {
+    const [ loginUser, setLoginUser ] = useState({email: "", password: ""});
+    const [ errorMessages, setErrorMessages ] = useState({email: "", password: ""});
+    const [ refresh, setRefresh ] = useRecoilState(refreshState);
+
+    const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setLoginUser({ ...loginUser, [name]: value });
+    }
+
+    const loginHandleSubmit = async () => {
+        const option = {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+        try {
+            const response = await axios.post("http://localhost:8080/auth/login", JSON.stringify(loginUser), option);
+            setErrorMessages({email: "", password: ""});
+            const accessToken = response.data.grantType + " " + response.data.accessToken;
+            localStorage.setItem("accessToken", accessToken);
+            setRefresh(false);
+            navigate("/");
+        }catch(error) {
+            setErrorMessages({email: "", password: "", ...error.response.data.errorData});
+        }
+    }
+
     return (
         <div css={container}>
             <header>
@@ -114,17 +151,19 @@ const Login = () => {
             <main css={mainContainer}>
                 <div css={authForm}>
                     <label css={inputLabel}>Email</label>
-                    <LoginInput type="email" placeholder="Type your email">
-                        <FiUser/>
+                    <LoginInput type="email" placeholder="Type your email" onChange={handleChange} name="email">
+                        <FiUser />
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.email}</div>
+
                     <label css={inputLabel}>Password</label>
-                    <LoginInput type="password" placeholder="Type your password">
-                        <FiLock/>
+                    <LoginInput type="password" placeholder="Type your password" onChange={handleChange} name="password">
+                        <FiLock />
                     </LoginInput>
-                    <div css={forgotpassword}>
-                        <Link to="/forgot/password">Forgot Password?</Link>
-                    </div>
-                    <button css={loginButton}>LOGIN</button>
+                    <div css={errorMsg}>{errorMessages.password}</div>
+
+                    <div css={forgotPassword}><Link to="/forgot/password">Forgot Password?</Link></div>
+                    <button css={loginButton} onClick={loginHandleSubmit}>LOGIN</button>
                 </div>
             </main>
 
@@ -135,7 +174,7 @@ const Login = () => {
                 <div css={oauth2("naver")}><SiNaver /></div>
                 <div css={oauth2("kakao")}><SiKakao /></div>
             </div>
-            
+
             <div css={signupMessage}>Or Sign Up Using</div>
 
             <footer>

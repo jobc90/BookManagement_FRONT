@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FiUser, FiLock } from 'react-icons/fi';
 import LoginInput from '../../components/UI/login/LoginInput/LoginInput';
 import { BiRename } from 'react-icons/bi';
@@ -70,15 +70,25 @@ const register = css`
     font-weight: 900;
 `;
 
+const errorMsg = css`
+margin-left: 5px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: red;
+`;
+
 
 const Register = () => {
-    const [registerUser, setRegisterUser] = useState({ email: "", password: "", name: "" })
+    const navigate = useNavigate();
+
+    const [registerUser, setRegisterUser] = useState({ email: "", password: "", name: "" });
+    const [errorMessages, setErrorMessages] = useState({ email: "", password: "", name: "" });
 
     const onChangehandle = (e) => {
         const { name, value} = e.target;
         setRegisterUser({...registerUser, [name]: value})
     }
-    const registSubmit = () => {
+    const registSubmit = async() => {
         const data = {
             ...registerUser
         }
@@ -87,18 +97,26 @@ const Register = () => {
                 "Content-Type": "application/json"
             }
         }
-        axios
-        .post("http://localhost:8080/auth/signup", JSON.stringify(data), option)
-        .then(response => {
-            console.log("성공");
+        try {
+            const response = await axios.post("http://localhost:8080/auth/signup", JSON.stringify(data), option);
+            setErrorMessages({email: "", password: "", name: ""});
+            alert("회원가입 성공!")
+            navigate("/login")
             console.log(response);
-        })
-        .catch(error => {
-            console.log("에러");
-            console.log(error.response.data.errorData);
-        });
-        console.log("비동기 테스트")
+
+        } catch (error) {
+            setErrorMessages({email: "", password: "", name: "", ...error.response.data.errorData});
+        }
+        // .then(response => {
+        //     setErrorMessages({email: "", password: "", name: ""});
+        //     console.log(response);
+        // })
+        // .catch(error => {
+        //     setErrorMessages({email: "", password: "", name: "", ...error.response.data.errorData});
+        // });
+
     }
+
 
     return (
         <div css={container}>
@@ -111,14 +129,17 @@ const Register = () => {
                     <LoginInput type="email" placeholder="Type your email" onChange={onChangehandle} name="email">
                         <FiUser/>
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.email}</div>
                     <label css={inputLabel}>Password</label>
                     <LoginInput type="password" placeholder="Type your password" onChange={onChangehandle} name="password">
                         <FiLock/>
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.password}</div>
                     <label css={inputLabel}>Name</label>
                     <LoginInput type="text" placeholder="Type your name" onChange={onChangehandle} name="name">
                         <BiRename/>
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.name}</div>
 
                     <button css={loginButton} onClick={registSubmit}>REGISTER</button>
                 </div>
