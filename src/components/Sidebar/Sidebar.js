@@ -1,10 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
-import React, { useState } from 'react';
-import { GrFormClose, GrUser } from 'react-icons/gr';
-import { RiUser5Line } from 'react-icons/ri';
+import React from 'react';
+import { GrFormClose } from 'react-icons/gr';
 import ListButton from './ListButton/ListButton';
-import { BiHome, BiLike, BiListUl, BiLogOut, BiUserCircle } from 'react-icons/bi';
+import { BiHome, BiLike, BiListUl, BiLogOut } from "react-icons/bi";
+import { useState } from 'react';
 import { useQuery } from 'react-query';
 import axios from 'axios';
 
@@ -12,21 +12,24 @@ const sidebar = (isOpen) => css`
     position: absolute;
     display: flex;
     left: ${isOpen ? "10px" : "-240px"};
-    overflow: hidden;
     flex-direction: column;
     border: 1px solid #dbdbdb;
     border-radius: 10px;
     width: 250px;
     box-shadow: -1px 0px 5px #dbdbdb;
     transition: left 1s ease;
-    ${isOpen ? "" : ` 
+    background-color: white;
+    ${isOpen ? "" : `
         cursor: pointer;
     `}
-    ${isOpen ? "" : `
-        &:hover {
+    
+    ${isOpen ? "" : 
+        `&:hover {
             left: -230px;
         }`
     }
+    z-index: 99;
+    
 `;
 
 const header = css`
@@ -34,7 +37,6 @@ const header = css`
     align-items: center;
     margin-bottom: 15px;
     padding: 10px;
-
 `;
 
 const userIcon = css`
@@ -47,7 +49,7 @@ const userIcon = css`
     height: 45px;
     background-color: #713fff;
     color: white;
-    font-size: 35px;
+    font-size: 24px;
     font-weight: 600;
 `;
 
@@ -100,37 +102,46 @@ const Sidebar = () => {
     const [ isOpen, setIsOpen ] = useState(false);
     const { data, isLoading } = useQuery(["principal"], async () => {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get("http://localhost:8080/auth/principal",
-        {params: {accessToken}},
+        const response = await axios.get("http://localhost:8080/auth/principal", 
+        {params: {accessToken}}, 
         {
             enabled: accessToken
         });
-        console.log(response)
         return response;
     });
+
     const sidebarOpenClickHandle = () => {
         if(!isOpen){
             setIsOpen(true);
         }
     }
+
     const sidebarCloseClickHandle = () => {
         setIsOpen(false);
     }
+
+    const logoutClickHandle = () => {
+        if(window.confirm("로그아웃 하시겠습니까?")) {
+            localStorage.removeItem("accessToken");
+        }
+    }
+
     if(isLoading) {
         return <>로딩중...</>;
     }
+
     if(!isLoading)
     return (
-        <div css={sidebar(isOpen)} onClick={sidebarOpenClickHandle}>
+        <div css={sidebar(isOpen)} onClick={sidebarOpenClickHandle} >
             <header css={header}>
                 <div css={userIcon}>
-                    {data.data.name.subStr(0, 1)}
+                    {data.data.name.substr(0, 1)}
                 </div>
                 <div css={userInfo}>
                     <h1 css={userName}>{data.data.name}</h1>
                     <p css={userEmail}>{data.data.email}</p>
                 </div>
-                <div css={closeButton} onClick={sidebarCloseClickHandle}><GrFormClose /></div>
+                <div css={closeButton} onClick={sidebarCloseClickHandle} ><GrFormClose /></div>
             </header>
             <main css={main}>
                 <ListButton title="Dashboard"><BiHome /></ListButton>
@@ -138,7 +149,7 @@ const Sidebar = () => {
                 <ListButton title="Rental"><BiListUl /></ListButton>
             </main>
             <footer css={footer}>
-                <ListButton title="Logout"><BiLogOut /></ListButton>
+                <ListButton title="Logout" onClick={logoutClickHandle}><BiLogOut /></ListButton>
             </footer>
         </div>
     );

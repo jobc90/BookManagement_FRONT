@@ -9,10 +9,9 @@ const list = css`
     width: 100%;
     padding: 5px;
     cursor: pointer;
-    &:hover{
+    &:hover {
         background-color: #fafafa;
     }
-
 `;
 
 const listIcon = css`
@@ -29,9 +28,9 @@ const listTitle = css`
     font-weight: 600;
 `;
 
-const ListButton = ({children, title}) => {
+const ListButton = ({ children, title, onClick }) => {
     return (
-        <div css={list}>
+        <div css={list} onClick={onClick}>
             <div css={listIcon}>{children}</div>
             <div css={listTitle}>{title}</div>
         </div>
