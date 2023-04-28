@@ -10,6 +10,8 @@ const validateToken = async (accessToken) => {
 }
 
 const AuthRoute = ({ path, element }) => {
+    
+
     const [ authenticated, setAuthenticated ] = useRecoilState(authenticatedState);
     const permitAll = ["/login", "/register", "/password/forgot"];
 
